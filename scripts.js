@@ -1,62 +1,114 @@
 import * as d3 from "d3";
-//let currentScene = 0;
-//const scenes = [s1, s2, s3];
 
-//  window.onload = renderScene;
+// Initialize scenes array and current scene index
+const scenes = [
+    {
+        country: "United States",
+        data: [],
+        svg: null
+    },
+    {
+        country: "Somalia",
+        data: [],
+        svg: null
+    },
+    {
+        country: "Summary",
+        data: [],
+        svg: null
+    }
+];
+let currentSceneIndex = 0;
 
-//  document 
-
-async function loadData() {
+// Function to load filtered data for scenes 1 and 2
+async function loadDataFilt() {
     const data = await d3.csv("https://raw.githubusercontent.com/KAkabu2/KAkabu2.github.io/main/Data/data.csv");
     const filtered = data.filter(d => {
         return (d.Entity === "United States" || d.Entity === "Somalia") &&
-        (parseInt(d.Year) >= 1990 && parseInt(d.Year) <= 2017);
+               (parseInt(d.Year) >= 1990 && parseInt(d.Year) <= 2017);
     });
     return filtered;
-}   
+}
 
-loadData().then(filteredData => {
-    console.log(filteredData);
-    // const margin = {top: 20, right: 30, bottom: 40, left: 40};
-    // const width = 800 - margin.left - margin.right;
-    // const height = 400 - margin.top - margin.bottom;
+// Function to load full data for scene 3
+async function loadData() {
+    const data = await d3.csv("https://raw.githubusercontent.com/KAkabu2/KAkabu2.github.io/main/Data/data.csv");
+    return data;
+}
 
-    // const svg = d3.select("svg")
-    //     .attr("width", width + margin.left + margin.right)
-    //     .attr("height", height + margin.top + margin.bottom)
-    //   .append("g")
-    //     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+// Load filtered data and assign to scenes
+loadDataFilt().then(filteredData => {
+    filteredData.forEach(d => {
+        d.Year = new Date(d.Year, 0, 1);  // Convert Year to a date
+        d["Anxiety disorders (%)"] = +d["Anxiety disorders (%)"];
+        if (d.Entity === "United States") {
+            scenes[0].data.push(d);
+        } else if (d.Entity === "Somalia") {
+            scenes[1].data.push(d);
+        }
+    });
 
-    // const x = d3.scaleLinear().domain([1990, 2017]).range([0, width]);
-    // console.log(x);
-    // const y = d3.scaleLinear().domain([0, d3.max(filteredData, d => +d.Eatingdisorders)]).range([height, 0]);
+    scenes.forEach(scene => {
+        scene.svg = d3.select("svg").append("g").style("display", "none");
+    });
 
-    // svg.append("g")
-    //     .attr("transform", "translate(0," + height + ")")
-    //     .call(d3.axisBottom(x).tickFormat(d3.format("~d")));
+    renderScene(scenes[currentSceneIndex]);
 
-    // svg.append("g")
-    //     .call(d3.axisLeft(y));
+    document.getElementById("next-btn").addEventListener("click", function() {
+        currentSceneIndex = (currentSceneIndex + 1) % scenes.length;
+        renderScene(scenes[currentSceneIndex]);
+    });
 
-    // const lineAmerica = d3.line()
-    //     .x(d => x(d.Year))
-    //     .y(d => y(d.Eatingdisorders));
-
-    // svg.append("path")
-    //     .datum(filteredData.filter(d => d.Entity === "United States"))
-    //     .attr("fill", "none")
-    //     .attr("stroke", "blue")
-    //     .attr("stroke-width", 1.5)
-    //     .attr("d", lineAmerica);
-
-    // const lineSomalia = d3.line()
-    //     .x(d => x(d.Year))
-    //     .y(d => y(d.Eatingdisorders));
-
-    // svg.append("path")
-    //     .datum(filteredData.filter(d => d.Entity === "Somalia"))
-    //     .attr("fill", "none")
-    //     .attr("stroke", "red")
-    //     .attr("stroke-width", 1.5)
-    //     .attr("d", lineSomalia);
+    document.getElementById("prev-btn").addEventListener("click", function() {
+        currentSceneIndex = (currentSceneIndex - 1 + scenes.length) % scenes.length;
+        renderScene(scenes[currentSceneIndex]);
+    });
 });
+
+function renderScene(scene) {
+    d3.selectAll("g").style("display", "none");
+    scene.svg.style("display", "block");
+    if (scene.svg.select("path").empty()) {
+        drawLineGraph(scene);
+    }
+}
+
+function drawLineGraph(scene) {
+    const margin = {top: 20, right: 30, bottom: 30, left: 40},
+          width = +d3.select("svg").attr("width") - margin.left - margin.right,
+          height = +d3.select("svg").attr("height") - margin.top - margin.bottom;
+
+    const x = d3.scaleTime().range([0, width]),
+          y = d3.scaleLinear().range([height, 0]);
+
+    const line = d3.line()
+        .x(d => x(d.Year))
+        .y(d => y(d["Anxiety disorders (%)"]));
+
+    const g = scene.svg
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    x.domain(d3.extent(scene.data, d => d.Year));
+    y.domain([0, d3.max(scene.data, d => d["Anxiety disorders (%)"])]);
+
+    g.append("g")
+        .attr("class", "axis axis--x")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x));
+
+    g.append("g")
+        .attr("class", "axis axis--y")
+        .call(d3.axisLeft(y))
+      .append("text")
+        .attr("fill", "#000")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 6)
+        .attr("dy", "0.71em")
+        .attr("text-anchor", "end")
+        .text("Anxiety (%)");
+
+    g.append("path")
+        .datum(scene.data)
+        .attr("class", "line")
+        .attr("d", line);
+}
