@@ -1,5 +1,3 @@
-import * as d3 from "d3";
-
 // Initialize scenes array and current scene index
 const scenes = [
     {
@@ -20,55 +18,50 @@ const scenes = [
 ];
 let currentSceneIndex = 0;
 
-// Function to load filtered data for scenes 1 and 2
-async function loadDataFilt() {
-    const data = await d3.csv("https://raw.githubusercontent.com/KAkabu2/KAkabu2.github.io/main/Data/data.csv");
-    const filtered = data.filter(d => {
-        return (d.Entity === "United States" || d.Entity === "Somalia") &&
-               (parseInt(d.Year) >= 1990 && parseInt(d.Year) <= 2017);
-    });
-    return filtered;
-}
-
-// Function to load full data for scene 3
 async function loadData() {
-    const data = await d3.csv("https://raw.githubusercontent.com/KAkabu2/KAkabu2.github.io/main/Data/data.csv");
-    return data;
+    const data = await d3.csv("https://raw.githubusercontent.com/KAkabu2/KAkabu2.github.io/main/Data/data.csv", function(data) {
+        console.log("Data length is " + data.length);
+        console.log(data[0]);
+
+        for (let i = 0; i < data.length; i++) {
+            const d = data[i];
+            d["Anxiety disorders (%)"] = +d["Anxiety disorders (%)"];
+            if (d.Entity === "United States" && d.Year >= 1970 && d.Year <= 2017) {
+                scenes[0].data.push(d);
+            } else if (d.Entity === "Somalia" && d.Year >= 1970 && d.Year <= 2017) {
+                scenes[1].data.push(d);
+            }
+        }
+
+        scenes.forEach(scene => {
+            scene.svg = d3.select("svg").append("g").style("display", "none");
+        });
+    
+        renderScene(scenes[currentSceneIndex]);
+    
+        document.getElementById("next-btn").addEventListener("click", function() {
+            currentSceneIndex = (currentSceneIndex + 1) % scenes.length;
+            renderScene(scenes[currentSceneIndex]);
+        });
+    
+        document.getElementById("prev-btn").addEventListener("click", function() {
+            currentSceneIndex = (currentSceneIndex - 1 + scenes.length) % scenes.length;
+            renderScene(scenes[currentSceneIndex]);
+        });
+    });
 }
 
-// Load filtered data and assign to scenes
-loadDataFilt().then(filteredData => {
-    filteredData.forEach(d => {
-        d.Year = new Date(d.Year, 0, 1);  // Convert Year to a date
-        d["Anxiety disorders (%)"] = +d["Anxiety disorders (%)"];
-        if (d.Entity === "United States") {
-            scenes[0].data.push(d);
-        } else if (d.Entity === "Somalia") {
-            scenes[1].data.push(d);
-        }
-    });
-
-    scenes.forEach(scene => {
-        scene.svg = d3.select("svg").append("g").style("display", "none");
-    });
-
-    renderScene(scenes[currentSceneIndex]);
-
-    document.getElementById("next-btn").addEventListener("click", function() {
-        currentSceneIndex = (currentSceneIndex + 1) % scenes.length;
-        renderScene(scenes[currentSceneIndex]);
-    });
-
-    document.getElementById("prev-btn").addEventListener("click", function() {
-        currentSceneIndex = (currentSceneIndex - 1 + scenes.length) % scenes.length;
-        renderScene(scenes[currentSceneIndex]);
-    });
-});
+async function initialize() {
+    loadData();
+    console.log("made it to line 50");
+    
+}
 
 function renderScene(scene) {
     d3.selectAll("g").style("display", "none");
     scene.svg.style("display", "block");
     if (scene.svg.select("path").empty()) {
+        console.log("attempting to draw line graph for scene" + scene);
         drawLineGraph(scene);
     }
 }
@@ -78,7 +71,7 @@ function drawLineGraph(scene) {
           width = +d3.select("svg").attr("width") - margin.left - margin.right,
           height = +d3.select("svg").attr("height") - margin.top - margin.bottom;
 
-    const x = d3.scaleTime().range([0, width]),
+    const x = d3.scaleLinear().range([0, width]),
           y = d3.scaleLinear().range([height, 0]);
 
     const line = d3.line()
@@ -112,3 +105,5 @@ function drawLineGraph(scene) {
         .attr("class", "line")
         .attr("d", line);
 }
+
+initialize();
