@@ -31,6 +31,7 @@ async function loadData() {
             } else if (d.Entity === "Somalia" && d.Year >= 1970 && d.Year <= 2017) {
                 scenes[1].data.push(d);
             }
+            scenes[2].data.push(d);
         }
 
         scenes.forEach(scene => {
@@ -48,20 +49,22 @@ async function loadData() {
             currentSceneIndex = (currentSceneIndex - 1 + scenes.length) % scenes.length;
             renderScene(scenes[currentSceneIndex]);
         });
+        document.getElementById("back-btn").addEventListener("click", function() {
+            currentSceneIndex = 2;
+            renderScene(scenes[currentSceneIndex]);
+        });
     });
 }
 
 async function initialize() {
     loadData();
-    console.log("made it to line 50");
-    
+    drawMap();
 }
 
 function renderScene(scene) {
     d3.selectAll("g").style("display", "none");
     scene.svg.style("display", "block");
     if (scene.svg.select("path").empty()) {
-        console.log("attempting to draw line graph for scene" + scene);
         drawLineGraph(scene);
     }
 }
@@ -71,23 +74,29 @@ function drawLineGraph(scene) {
           width = +d3.select("svg").attr("width") - margin.left - margin.right,
           height = +d3.select("svg").attr("height") - margin.top - margin.bottom;
 
-    const x = d3.scaleLinear().range([0, width]),
-          y = d3.scaleLinear().range([height, 0]);
+    scene.svg.selectAll("*").remove();      
+
+    const x = d3.scaleLinear().domain(d3.extent(scene.data, d => d.Year)).range([0, width]),
+          y = d3.scaleLinear().domain([0, d3.max(scene.data, d => d["Anxiety disorders (%)"])]).range([height, 0]);
+
+    const g = scene.svg
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     const line = d3.line()
         .x(d => x(d.Year))
         .y(d => y(d["Anxiety disorders (%)"]));
 
-    const g = scene.svg
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    x.domain(d3.extent(scene.data, d => d.Year));
-    y.domain([0, d3.max(scene.data, d => d["Anxiety disorders (%)"])]);
-
     g.append("g")
         .attr("class", "axis axis--x")
         .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x));
+        .call(d3.axisBottom(x))
+        .append("text")
+        .attr("fill", "#000")
+        .attr("x", width - margin.right + 5)
+        .attr("y", -15)
+        .attr("dy", "0.71em")
+        .attr("text-anchor", "start")
+        .text("Year");
 
     g.append("g")
         .attr("class", "axis axis--y")
@@ -100,10 +109,36 @@ function drawLineGraph(scene) {
         .attr("text-anchor", "end")
         .text("Anxiety (%)");
 
+    console.log(scene.data);
     g.append("path")
         .datum(scene.data)
         .attr("class", "line")
+        .attr("fill", "none")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1.5)
         .attr("d", line);
+}
+
+function drawMap() {
+    const svg = d3.select("svg");
+    const path = d3.geoPath();
+    const g = scenes[2].svg;
+
+
+    d3.json("https://d3js.org/world-50m.v1.json").then(function(world) {
+        g.selectAll("path")
+            .data(topojson.feature(world, world.objects.countries).features)
+            .enter().append("path")
+            .attr("d", path)
+            .on("click", function(event, d) {
+                const countryName = d.properties.name;
+                const countryScene = scenes.find(scene => scene.country === countryName);
+                if (countryScene) {
+                    currentSceneIndex = scenes.indexOf(countryScene);
+                    renderScene(scenes[currentSceneIndex]);
+                }
+            });
+    });
 }
 
 initialize();
