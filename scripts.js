@@ -18,9 +18,9 @@ async function loadData() {
 
     data.forEach(d => {
         d["Anxiety disorders (%)"] = +d["Anxiety disorders (%)"];
-        if (d.Entity === "Canada" && d.Year >= 1970 && d.Year <= 2017) {
+        if (d.Entity === "South Korea" && d.Year >= 1970 && d.Year <= 2017) {
             scenes[0].data.push(d);
-        } else if (d.Entity === "Ethiopia" && d.Year >= 1970 && d.Year <= 2017) {
+        } else if (d.Entity === "Ghana" && d.Year >= 1970 && d.Year <= 2017) {
             scenes[1].data.push(d);
         }
         scenes[2].data.push(d);
@@ -60,8 +60,8 @@ function renderScene(scene) {
     if (scene === scenes[2] && scene.svg.select("path.sphere").empty()) {
         drawMap(scene);
     } else if (scene === scenes[0] || scene === scenes[1]) {
+        //transitionScene(scene);
         drawLineGraph(scene);
-        transitionScene(scene);
     }
 }
 
@@ -76,7 +76,7 @@ function transitionScene(scene) {
         
         const combinedData = scenes[0].data.concat(scenes[1].data);
         
-        // Update the scales
+        // Update all elements
         const x = d3.scaleLinear().domain(d3.extent(combinedData, d => d.Year)).range([0, width]);
         const y = d3.scaleLinear().domain(d3.extent(combinedData, d => d["Anxiety disorders (%)"])).range([height, 0]);
 
@@ -84,7 +84,6 @@ function transitionScene(scene) {
             .x(d => x(d.Year))
             .y(d => y(d["Anxiety disorders (%)"]));
 
-        // Update the lines
         svg.select(".line")
             .duration(750)
             .attr("d", line(scenes[0].data));
@@ -93,12 +92,10 @@ function transitionScene(scene) {
             .duration(750)
             .attr("d", line(scenes[1].data));
 
-        // Update the x-axis
         svg.select(".axis--x")
             .duration(750)
             .call(d3.axisBottom(x));
 
-        // Update the y-axis
         svg.select(".axis--y")
             .duration(750)
             .call(d3.axisLeft(y));
@@ -125,6 +122,14 @@ function drawLineGraph(scene) {
     var div = d3.select("body").append("div")
     .attr("class", "tooltip")
     .style("opacity", 0);
+
+    g.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "middle")  
+        .style("font-size", "16px") 
+        .style("text-decoration", "underline")  
+        .text(scene.data[0].Entity);
 
     g.append("g")
         .attr("class", "axis axis--x")
@@ -182,7 +187,7 @@ function drawLineGraph(scene) {
             var yPos = d3.select(this).attr("cy");
             div.html(`Anxiety Disorders (%): ${obtainAnx(i)} <br />Year: ${obtainYear(i)}`)
                 .style("top", (parseFloat(yPos) + 5) + "px")
-                .style("left", (parseFloat(xPos) - 35) + "px");
+                .style("left", (parseFloat(xPos) -38) + "px");
         }).on("mouseout", function(d, i) {
             d3.select(this).transition()
                 .duration('200')
@@ -191,6 +196,37 @@ function drawLineGraph(scene) {
                 .duration('200')
                 .style("opacity", 0);
         });
+    if (scene === scenes[0]) { // Assuming the first graph is for the United States
+        const annotations = [
+            {
+                note: {
+                    label: "This axis shows the percentage of people with anxiety disorders.",
+                    title: "Y-Axis Information"
+                },
+                x: margin.left - 30,
+                y: y(y.domain()[1]) + 40 , // Position near the y-axis at the top
+                dy: 30,
+                dx: 30
+            },
+            {
+                note: {
+                    label: "Economic downturn leads to a rise in anxiety, but recovery is swift.",
+                    title: "2008: Economic Crisis" 
+                },
+                x: width / 2 + 190,
+                y: y(y.domain()[1]) + 295 , // Position near the y-axis at the top
+                dy: 30,
+                dx: 30
+            }
+        ];
+
+        const makeAnnotations = d3.annotation()
+            .annotations(annotations);
+
+        g.append("g")
+            .attr("class", "annotation-group")
+            .call(makeAnnotations);
+    }
 }
 
 function drawMap(scene) {
@@ -215,27 +251,37 @@ function drawMap(scene) {
 
     d3.json("https://d3js.org/world-50m.v1.json").then(data => {
         const countries = topojson.feature(data, data.objects.countries).features;
+        console.log("Countries: ", countries);
         svg.selectAll('path.country').data(countries)
             .enter().append('path')
             .attr('class', 'country')
             .attr('d', pathGenerator)
             .attr('fill', (d, i) => colorScale(i))
-            .on("mouseover", function(d, i) {
+            .on("mouseover", function(event, d) {
                 d3.select(this).transition()
                     .duration('100')
-                    .attr("r", 7);
+                    .style("stroke", "#000")
+                    .style("stroke-width", 1.5);
                     
                 div.transition()
                     .duration('200')
                     .style("opacity", 1);
     
-                div.html(`Country: ${obtainCountry(i)}`);
-            }).on("mouseout", function(d, i) {
+                div.html(`Country: ${d.properties.name}`)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 20) + "px");
+            }).on("mousemove", function(event) {
+                div.style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 20) + "px");
+            })
+            .on("mouseout", function() {
                 d3.select(this).transition()
-                    .duration('200')
-                    .attr("r", 4);
+                    .duration(200)
+                    .style("stroke", null)
+                    .style("stroke-width", null);
+                
                 div.transition()
-                    .duration('200')
+                    .duration(200)
                     .style("opacity", 0);
             });;
     }).catch(error => {

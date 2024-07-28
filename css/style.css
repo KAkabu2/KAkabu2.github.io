@@ -17,4 +17,5 @@ div.tooltip {
 .country {
     stroke: black;
     stroke-width: 0.5px;
+    cursor: pointer;
 }
