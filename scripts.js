@@ -17,18 +17,17 @@ const scenes = [
     }
 ];
 let currentSceneIndex = 0;
+let prevScene = 0;
 
 async function loadData() {
     const data = await d3.csv("https://raw.githubusercontent.com/KAkabu2/KAkabu2.github.io/main/Data/data.csv", function(data) {
-        console.log("Data length is " + data.length);
-        console.log(data[0]);
 
         for (let i = 0; i < data.length; i++) {
             const d = data[i];
             d["Anxiety disorders (%)"] = +d["Anxiety disorders (%)"];
-            if (d.Entity === "United States" && d.Year >= 1970 && d.Year <= 2017) {
+            if (d.Entity === "Canada" && d.Year >= 1970 && d.Year <= 2017) {
                 scenes[0].data.push(d);
-            } else if (d.Entity === "Somalia" && d.Year >= 1970 && d.Year <= 2017) {
+            } else if (d.Entity === "Ethiopia" && d.Year >= 1970 && d.Year <= 2017) {
                 scenes[1].data.push(d);
             }
             scenes[2].data.push(d);
@@ -41,11 +40,13 @@ async function loadData() {
         renderScene(scenes[currentSceneIndex]);
     
         document.getElementById("next-btn").addEventListener("click", function() {
+            prevScene = 1;
             currentSceneIndex = (currentSceneIndex + 1) % scenes.length;
             renderScene(scenes[currentSceneIndex]);
         });
     
         document.getElementById("prev-btn").addEventListener("click", function() {
+            prevScene = 1;
             currentSceneIndex = (currentSceneIndex - 1 + scenes.length) % scenes.length;
             renderScene(scenes[currentSceneIndex]);
         });
@@ -58,14 +59,60 @@ async function loadData() {
 
 async function initialize() {
     loadData();
-    drawMap();
+    
 }
 
 function renderScene(scene) {
     d3.selectAll("g").style("display", "none");
+
     scene.svg.style("display", "block");
-    if (scene.svg.select("path").empty()) {
+
+    if (scene === scenes[2] && scene.svg.select("path.sphere").empty()) {
+        drawMap(scene);
+    } else {
         drawLineGraph(scene);
+        transitionScene(scene);
+    }
+}
+
+function transitionScene(scene) {
+    // Handle transitions for line graphs
+    const margin = {top: 20, right: 30, bottom: 30, left: 40},
+          width = +d3.select("svg").attr("width") - margin.left - margin.right,
+          height = +d3.select("svg").attr("height") - margin.top - margin.bottom;
+
+    // Handle transitions for line graphs
+    if (currentSceneIndex === 0 || currentSceneIndex === 1) {
+        const svg = d3.select("svg").transition();
+        
+        const combinedData = scenes[0].data.concat(scenes[1].data);
+        
+        // Update the scales
+        const x = d3.scaleLinear().domain(d3.extent(combinedData, d => d.Year)).range([0, width]);
+        const y = d3.scaleLinear().domain(d3.extent(combinedData, d => d["Anxiety disorders (%)"])).range([height, 0]);
+
+        const line = d3.line()
+            .x(d => x(d.Year))
+            .y(d => y(d["Anxiety disorders (%)"]));
+
+        // Update the lines
+        svg.select(".line")
+            .duration(750)
+            .attr("d", line(scenes[0].data));
+
+        svg.select(".line.red")
+            .duration(750)
+            .attr("d", line(scenes[1].data));
+
+        // Update the x-axis
+        svg.select(".axis--x")
+            .duration(750)
+            .call(d3.axisBottom(x));
+
+        // Update the y-axis
+        svg.select(".axis--y")
+            .duration(750)
+            .call(d3.axisLeft(y));
     }
 }
 
@@ -77,7 +124,7 @@ function drawLineGraph(scene) {
     scene.svg.selectAll("*").remove();      
 
     const x = d3.scaleLinear().domain(d3.extent(scene.data, d => d.Year)).range([0, width]),
-          y = d3.scaleLinear().domain([0, d3.max(scene.data, d => d["Anxiety disorders (%)"])]).range([height, 0]);
+          y = d3.scaleLinear().domain(d3.extent(scene.data, d => d["Anxiety disorders (%)"])).range([height, 0]);
 
     const g = scene.svg
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -109,7 +156,6 @@ function drawLineGraph(scene) {
         .attr("text-anchor", "end")
         .text("Anxiety (%)");
 
-    console.log(scene.data);
     g.append("path")
         .datum(scene.data)
         .attr("class", "line")
@@ -119,26 +165,22 @@ function drawLineGraph(scene) {
         .attr("d", line);
 }
 
-function drawMap() {
-    const svg = d3.select("svg");
-    const path = d3.geoPath();
-    const g = scenes[2].svg;
-
-
-    d3.json("https://d3js.org/world-50m.v1.json").then(function(world) {
-        g.selectAll("path")
-            .data(topojson.feature(world, world.objects.countries).features)
-            .enter().append("path")
-            .attr("d", path)
-            .on("click", function(event, d) {
-                const countryName = d.properties.name;
-                const countryScene = scenes.find(scene => scene.country === countryName);
-                if (countryScene) {
-                    currentSceneIndex = scenes.indexOf(countryScene);
-                    renderScene(scenes[currentSceneIndex]);
-                }
-            });
+function drawMap(scene) {
+    const svg = scene.svg;
+    const projection = d3.geoNaturalEarth1();
+    const pathGenerator = d3.geoPath().projection(projection);
+    svg.append('path')
+        .attr('class', 'sphere')
+        .attr('d', pathGenerator({type: 'Sphere'}));
+    
+    d3.json("https://d3js.org/world-50m.v1.json", function(error, data) {
+        if (error) throw error;
+        
+        const countries = topojson.feature(data, data.objects.countries);
+        svg.selectAll('path.country').data(countries.features)
+            .enter().append('path')
+            .attr('class', 'country')
+            .attr('d', pathGenerator);
     });
 }
-
 initialize();
