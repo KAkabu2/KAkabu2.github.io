@@ -47,6 +47,10 @@ async function loadData() {
         currentSceneIndex = 2;
         renderScene(scenes[currentSceneIndex]);
     });
+
+    document.getElementById("Takeaway").addEventListener("click", function() {
+        
+    });
 }
 
 async function initialize() {
@@ -174,7 +178,7 @@ function drawLineGraph(scene) {
         .attr("cy", d => y(d["Anxiety disorders (%)"]))
         .attr("r", 4)
         .attr("fill", function(d) {
-            if (d.Year == 2008 || d.Year ==  1990 || d.Year == 2001) {
+            if (d.Year == 2008 || (d.Year ==  1990 && scene == scenes[0]) || (d.Year == 2001 && scene == scenes[0])) {
                 return "blue";
             } else {
                 return "red";
@@ -201,70 +205,88 @@ function drawLineGraph(scene) {
             div.transition()
                 .duration('200')
                 .style("opacity", 0);
+        }).on("click", function(d, i) {
+            if (scene == scenes[0]) {
+                if (i.Year == 2008) {
+                    const annotations = [
+                        {
+                            note: {
+                                label: "Economic downturn leads to a rise in anxiety, but recovery is swift.",
+                                title: "2008: Economic Crisis" 
+                            },
+                            x: width / 2 + 190,
+                            y: y(y.domain()[1]) + 170 , // Position near the y-axis at the top
+                            dy: -30,
+                            dx: 30
+                        }
+                    ];
+            
+                    const makeAnnotations = d3.annotation()
+                        .annotations(annotations);
+            
+                    g.append("g")
+                        .attr("class", "annotation-group")
+                        .call(makeAnnotations);
+                } else if (i.Year == 2001) {
+                    var annotations = [
+                    {
+                        note: {
+                            label: "No discernible impact on population anxiety.",
+                            title: "2001: September 11th Terrorist Attacks" 
+                        },
+                        x: width / 2 - 105,
+                        y: y(y.domain()[1]) , // Position near the y-axis at the top
+                        dy: 70,
+                        dx: 30
+                    }];
+                    const makeAnnotations = d3.annotation()
+                        .annotations(annotations);
+            
+                    g.append("g")
+                        .attr("class", "annotation-group")
+                        .call(makeAnnotations);
+                }
+            } else if (scene == scenes[1]) {
+                const annotations = [
+                    {
+                        note: {
+                            label: "Inflation increases heavily, and so does worsening mental health.",
+                            title: "2008: End of IMF-World Bank Debt Relief Program" 
+                        },
+                        x: width / 2 + 190,
+                        y: y(y.domain()[1]) + 285 , // Position near the y-axis at the top
+                        dy: -20,
+                        dx: -20
+                    }
+                ];
+                const makeAnnotations = d3.annotation()
+                        .annotations(annotations);
+            
+                    g.append("g")
+                        .attr("class", "annotation-group")
+                        .call(makeAnnotations);
+            }
+            
         });
-    if (scene === scenes[0]) {
-        const annotations = [
-            {
-                note: {
-                    label: "Mental health of individuals largely unaffected.",
-                    title: "1990: Gulf War"
-                },
-                x: margin.left - 40,
-                y: y(y.domain()[1]) + 395 , // Position near the y-axis at the top
-                dy: -30,
-                dx: 30
-            },
-            {
-                note: {
-                    label: "Economic downturn leads to a rise in anxiety, but recovery is swift.",
-                    title: "2008: Economic Crisis" 
-                },
-                x: width / 2 + 190,
-                y: y(y.domain()[1]) + 170 , // Position near the y-axis at the top
-                dy: -30,
-                dx: 30
-            },
-            {
-                note: {
-                    label: "Economic downturn leads to a rise in anxiety, but recovery is swift.",
-                    title: "2008: Economic Crisis" 
-                },
-                x: width / 2 + 190,
-                y: y(y.domain()[1]) + 170 , // Position near the y-axis at the top
-                dy: -30,
-                dx: 30
-            }
-        ];
-
-        const makeAnnotations = d3.annotation()
-            .annotations(annotations);
-
-        g.append("g")
-            .attr("class", "annotation-group")
-            .call(makeAnnotations);
-    }
-
-    if (scene === scenes[1]) { // Assuming the first graph is for the United States
-        const annotations = [
-            {
-                note: {
-                    label: "Inflation increases heavily, and so does worsening mental health.",
-                    title: "2008: End of IMF-World Bank Debt Relief Program" 
-                },
-                x: width / 2 + 190,
-                y: y(y.domain()[1]) + 285 , // Position near the y-axis at the top
-                dy: -20,
-                dx: -20
-            }
-        ];
-
-        const makeAnnotations = d3.annotation()
-            .annotations(annotations);
-
-        g.append("g")
-            .attr("class", "annotation-group")
-            .call(makeAnnotations);
-    }
+        if (scene == scenes[0]) {
+            var annotations = [
+                {
+                    note: {
+                        label: "Mental health of individuals largely unaffected.",
+                        title: "1990: Gulf War"
+                    },
+                    x: margin.left - 40,
+                    y: y(y.domain()[1]) + 395 , // Position near the y-axis at the top
+                    dy: -30,
+                    dx: 30
+                }];
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotations);
+        
+                g.append("g")
+                    .attr("class", "annotation-group")
+                    .call(makeAnnotations);
+        }
 }
 
 function drawMap(scene) {
