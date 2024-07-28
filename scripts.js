@@ -18,7 +18,7 @@ async function loadData() {
 
     data.forEach(d => {
         d["Anxiety disorders (%)"] = +d["Anxiety disorders (%)"];
-        if (d.Entity === "South Korea" && d.Year >= 1970 && d.Year <= 2017) {
+        if (d.Entity === "United States" && d.Year >= 1970 && d.Year <= 2017) {
             scenes[0].data.push(d);
         } else if (d.Entity === "Ghana" && d.Year >= 1970 && d.Year <= 2017) {
             scenes[1].data.push(d);
@@ -173,7 +173,13 @@ function drawLineGraph(scene) {
         .attr("cx", d => x(d.Year))
         .attr("cy", d => y(d["Anxiety disorders (%)"]))
         .attr("r", 4)
-        .attr("fill", "red")
+        .attr("fill", function(d) {
+            if (d.Year == 2008 || d.Year ==  1990 || d.Year == 2001) {
+                return "blue";
+            } else {
+                return "red";
+            }
+        })
         .on("mouseover", function(d, i) {
             d3.select(this).transition()
                 .duration('100')
@@ -196,16 +202,16 @@ function drawLineGraph(scene) {
                 .duration('200')
                 .style("opacity", 0);
         });
-    if (scene === scenes[0]) { // Assuming the first graph is for the United States
+    if (scene === scenes[0]) {
         const annotations = [
             {
                 note: {
-                    label: "This axis shows the percentage of people with anxiety disorders.",
-                    title: "Y-Axis Information"
+                    label: "Mental health of individuals largely unaffected.",
+                    title: "1990: Gulf War"
                 },
-                x: margin.left - 30,
-                y: y(y.domain()[1]) + 40 , // Position near the y-axis at the top
-                dy: 30,
+                x: margin.left - 40,
+                y: y(y.domain()[1]) + 395 , // Position near the y-axis at the top
+                dy: -30,
                 dx: 30
             },
             {
@@ -214,9 +220,41 @@ function drawLineGraph(scene) {
                     title: "2008: Economic Crisis" 
                 },
                 x: width / 2 + 190,
-                y: y(y.domain()[1]) + 295 , // Position near the y-axis at the top
-                dy: 30,
+                y: y(y.domain()[1]) + 170 , // Position near the y-axis at the top
+                dy: -30,
                 dx: 30
+            },
+            {
+                note: {
+                    label: "Economic downturn leads to a rise in anxiety, but recovery is swift.",
+                    title: "2008: Economic Crisis" 
+                },
+                x: width / 2 + 190,
+                y: y(y.domain()[1]) + 170 , // Position near the y-axis at the top
+                dy: -30,
+                dx: 30
+            }
+        ];
+
+        const makeAnnotations = d3.annotation()
+            .annotations(annotations);
+
+        g.append("g")
+            .attr("class", "annotation-group")
+            .call(makeAnnotations);
+    }
+
+    if (scene === scenes[1]) { // Assuming the first graph is for the United States
+        const annotations = [
+            {
+                note: {
+                    label: "Inflation increases heavily, and so does worsening mental health.",
+                    title: "2008: End of IMF-World Bank Debt Relief Program" 
+                },
+                x: width / 2 + 190,
+                y: y(y.domain()[1]) + 285 , // Position near the y-axis at the top
+                dy: -20,
+                dx: -20
             }
         ];
 
