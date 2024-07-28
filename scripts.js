@@ -69,7 +69,7 @@ function renderScene(scene) {
 
     if (scene === scenes[2] && scene.svg.select("path.sphere").empty()) {
         drawMap(scene);
-    } else {
+    } else if (scene === scenes[0] || scene === scenes[1]) {
         drawLineGraph(scene);
         transitionScene(scene);
     }
@@ -163,6 +163,30 @@ function drawLineGraph(scene) {
         .attr("stroke", "black")
         .attr("stroke-width", 1.5)
         .attr("d", line);
+
+    // scenes.forEach((sceneData, index) => {
+    //     const color = index === 0 ? "black" : "red";
+        
+    //     g.selectAll(`.dot-${index}`)
+    //         .data(sceneData.data)
+    //         .enter().append("circle")
+    //         .attr("class", `dot-${index}`)
+    //         .attr("cx", d => x(d.Year))
+    //         .attr("cy", d => y(d["Anxiety disorders (%)"]))
+    //         .attr("r", 3)
+    //         .attr("fill", color)
+    //         .on("mouseover", function(event, d) {
+    //             d3.select(this).attr("r", 6);
+    //             tooltip.transition().duration(200).style("opacity", .9);
+    //             tooltip.html(`Year: ${d.Year}<br>Anxiety: ${d["Anxiety disorders (%)"]}%`)
+    //                 .style("left", (event.pageX + 5) + "px")
+    //                 .style("top", (event.pageY - 28) + "px");
+    //         })
+    //         .on("mouseout", function(d) {
+    //             d3.select(this).attr("r", 3);
+    //             tooltip.transition().duration(500).style("opacity", 0);
+    //         });
+    // });
 }
 
 function drawMap(scene) {
