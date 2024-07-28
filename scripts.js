@@ -306,12 +306,8 @@ function drawMap(scene) {
     .attr("class", "tooltip")
     .style("opacity", 0);
 
-
-    var obtainCountry = d => d.Entity;
-
-    d3.json("https://d3js.org/world-50m.v1.json").then(data => {
-        const countries = topojson.feature(data, data.objects.countries).features;
-        console.log("Countries: ", countries);
+    d3.json("./Data/world.geojson").then(data => {
+        const countries = data.features;
         svg.selectAll('path.country').data(countries)
             .enter().append('path')
             .attr('class', 'country')
@@ -343,7 +339,7 @@ function drawMap(scene) {
                 div.transition()
                     .duration(200)
                     .style("opacity", 0);
-            });;
+            });
     }).catch(error => {
         console.error('Error loading the JSON data:', error);
     });
