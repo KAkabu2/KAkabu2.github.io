@@ -7,6 +7,9 @@ const scenes = [
     { country: "Somalia", data: [], svg: null },
     { country: "Summary", data: [], svg: null }
 ];
+
+const focus = { country: "focus", data: [], svg: null};
+
 let currentSceneIndex = 0;
 let prevScene = 0;
 
@@ -203,13 +206,38 @@ function drawMap(scene) {
 
     const colorScale = d3.scaleOrdinal(d3.schemeTableau10);
 
+    var div = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+
+    var obtainCountry = d => d.Entity;
+
     d3.json("https://d3js.org/world-50m.v1.json").then(data => {
         const countries = topojson.feature(data, data.objects.countries).features;
         svg.selectAll('path.country').data(countries)
             .enter().append('path')
             .attr('class', 'country')
             .attr('d', pathGenerator)
-            .attr('fill', (d, i) => colorScale(i));
+            .attr('fill', (d, i) => colorScale(i))
+            .on("mouseover", function(d, i) {
+                d3.select(this).transition()
+                    .duration('100')
+                    .attr("r", 7);
+                    
+                div.transition()
+                    .duration('200')
+                    .style("opacity", 1);
+    
+                div.html(`Country: ${obtainCountry(i)}`);
+            }).on("mouseout", function(d, i) {
+                d3.select(this).transition()
+                    .duration('200')
+                    .attr("r", 4);
+                div.transition()
+                    .duration('200')
+                    .style("opacity", 0);
+            });;
     }).catch(error => {
         console.error('Error loading the JSON data:', error);
     });
