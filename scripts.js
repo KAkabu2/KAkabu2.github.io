@@ -1,70 +1,57 @@
-// Initialize scenes array and current scene index
+const tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
 const scenes = [
-    {
-        country: "United States",
-        data: [],
-        svg: null
-    },
-    {
-        country: "Somalia",
-        data: [],
-        svg: null
-    },
-    {
-        country: "Summary",
-        data: [],
-        svg: null
-    }
+    { country: "United States", data: [], svg: null },
+    { country: "Somalia", data: [], svg: null },
+    { country: "Summary", data: [], svg: null }
 ];
 let currentSceneIndex = 0;
 let prevScene = 0;
 
 async function loadData() {
-    const data = await d3.csv("https://raw.githubusercontent.com/KAkabu2/KAkabu2.github.io/main/Data/data.csv", function(data) {
+    const data = await d3.csv("./Data/data.csv");
 
-        for (let i = 0; i < data.length; i++) {
-            const d = data[i];
-            d["Anxiety disorders (%)"] = +d["Anxiety disorders (%)"];
-            if (d.Entity === "Canada" && d.Year >= 1970 && d.Year <= 2017) {
-                scenes[0].data.push(d);
-            } else if (d.Entity === "Ethiopia" && d.Year >= 1970 && d.Year <= 2017) {
-                scenes[1].data.push(d);
-            }
-            scenes[2].data.push(d);
+    data.forEach(d => {
+        d["Anxiety disorders (%)"] = +d["Anxiety disorders (%)"];
+        if (d.Entity === "Canada" && d.Year >= 1970 && d.Year <= 2017) {
+            scenes[0].data.push(d);
+        } else if (d.Entity === "Ethiopia" && d.Year >= 1970 && d.Year <= 2017) {
+            scenes[1].data.push(d);
         }
+        scenes[2].data.push(d);
+    });
 
-        scenes.forEach(scene => {
-            scene.svg = d3.select("svg").append("g").style("display", "none");
-        });
-    
+    scenes.forEach(scene => {
+        scene.svg = d3.select("svg").append("g").style("display", "none");
+    });
+
+    renderScene(scenes[currentSceneIndex]);
+
+    document.getElementById("next-btn").addEventListener("click", function() {
+        prevScene = 1;
+        currentSceneIndex = (currentSceneIndex + 1) % scenes.length;
         renderScene(scenes[currentSceneIndex]);
-    
-        document.getElementById("next-btn").addEventListener("click", function() {
-            prevScene = 1;
-            currentSceneIndex = (currentSceneIndex + 1) % scenes.length;
-            renderScene(scenes[currentSceneIndex]);
-        });
-    
-        document.getElementById("prev-btn").addEventListener("click", function() {
-            prevScene = 1;
-            currentSceneIndex = (currentSceneIndex - 1 + scenes.length) % scenes.length;
-            renderScene(scenes[currentSceneIndex]);
-        });
-        document.getElementById("back-btn").addEventListener("click", function() {
-            currentSceneIndex = 2;
-            renderScene(scenes[currentSceneIndex]);
-        });
+    });
+
+    document.getElementById("prev-btn").addEventListener("click", function() {
+        prevScene = 1;
+        currentSceneIndex = (currentSceneIndex - 1 + scenes.length) % scenes.length;
+        renderScene(scenes[currentSceneIndex]);
+    });
+    document.getElementById("back-btn").addEventListener("click", function() {
+        currentSceneIndex = 2;
+        renderScene(scenes[currentSceneIndex]);
     });
 }
 
 async function initialize() {
     loadData();
-    
 }
 
 function renderScene(scene) {
     d3.selectAll("g").style("display", "none");
-
     scene.svg.style("display", "block");
 
     if (scene === scenes[2] && scene.svg.select("path.sphere").empty()) {
@@ -78,10 +65,9 @@ function renderScene(scene) {
 function transitionScene(scene) {
     // Handle transitions for line graphs
     const margin = {top: 20, right: 30, bottom: 30, left: 40},
-          width = +d3.select("svg").attr("width") - margin.left - margin.right,
-          height = +d3.select("svg").attr("height") - margin.top - margin.bottom;
+            width = +d3.select("svg").attr("width") - margin.left - margin.right,
+            height = +d3.select("svg").attr("height") - margin.top - margin.bottom;
 
-    // Handle transitions for line graphs
     if (currentSceneIndex === 0 || currentSceneIndex === 1) {
         const svg = d3.select("svg").transition();
         
@@ -118,13 +104,13 @@ function transitionScene(scene) {
 
 function drawLineGraph(scene) {
     const margin = {top: 20, right: 30, bottom: 30, left: 40},
-          width = +d3.select("svg").attr("width") - margin.left - margin.right,
-          height = +d3.select("svg").attr("height") - margin.top - margin.bottom;
+            width = +d3.select("svg").attr("width") - margin.left - margin.right,
+            height = +d3.select("svg").attr("height") - margin.top - margin.bottom;
 
-    scene.svg.selectAll("*").remove();      
+    scene.svg.selectAll("*").remove();
 
     const x = d3.scaleLinear().domain(d3.extent(scene.data, d => d.Year)).range([0, width]),
-          y = d3.scaleLinear().domain(d3.extent(scene.data, d => d["Anxiety disorders (%)"])).range([height, 0]);
+            y = d3.scaleLinear().domain(d3.extent(scene.data, d => d["Anxiety disorders (%)"])).range([height, 0]);
 
     const g = scene.svg
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -132,6 +118,10 @@ function drawLineGraph(scene) {
     const line = d3.line()
         .x(d => x(d.Year))
         .y(d => y(d["Anxiety disorders (%)"]));
+
+    var div = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
 
     g.append("g")
         .attr("class", "axis axis--x")
@@ -148,7 +138,7 @@ function drawLineGraph(scene) {
     g.append("g")
         .attr("class", "axis axis--y")
         .call(d3.axisLeft(y))
-      .append("text")
+        .append("text")
         .attr("fill", "#000")
         .attr("transform", "rotate(-90)")
         .attr("y", 6)
@@ -164,47 +154,65 @@ function drawLineGraph(scene) {
         .attr("stroke-width", 1.5)
         .attr("d", line);
 
-    // scenes.forEach((sceneData, index) => {
-    //     const color = index === 0 ? "black" : "red";
-        
-    //     g.selectAll(`.dot-${index}`)
-    //         .data(sceneData.data)
-    //         .enter().append("circle")
-    //         .attr("class", `dot-${index}`)
-    //         .attr("cx", d => x(d.Year))
-    //         .attr("cy", d => y(d["Anxiety disorders (%)"]))
-    //         .attr("r", 3)
-    //         .attr("fill", color)
-    //         .on("mouseover", function(event, d) {
-    //             d3.select(this).attr("r", 6);
-    //             tooltip.transition().duration(200).style("opacity", .9);
-    //             tooltip.html(`Year: ${d.Year}<br>Anxiety: ${d["Anxiety disorders (%)"]}%`)
-    //                 .style("left", (event.pageX + 5) + "px")
-    //                 .style("top", (event.pageY - 28) + "px");
-    //         })
-    //         .on("mouseout", function(d) {
-    //             d3.select(this).attr("r", 3);
-    //             tooltip.transition().duration(500).style("opacity", 0);
-    //         });
-    // });
+    var obtainAnx = d => d["Anxiety disorders (%)"];
+    var obtainYear = d => d.Year;
+
+    g.append("g")
+        .selectAll("circle")
+        .data(scene.data)
+        .enter()
+        .append("circle")
+        .attr("cx", d => x(d.Year))
+        .attr("cy", d => y(d["Anxiety disorders (%)"]))
+        .attr("r", 4)
+        .attr("fill", "red")
+        .on("mouseover", function(d, i) {
+            d3.select(this).transition()
+                .duration('100')
+                .attr("r", 7);
+                
+            div.transition()
+                .duration('200')
+                .style("opacity", 1);
+
+            var xPos = d3.select(this).attr("cx");
+            var yPos = d3.select(this).attr("cy");
+            div.html(`Anxiety Disorders (%): ${obtainAnx(i)} <br />Year: ${obtainYear(i)}`)
+                .style("top", (parseFloat(yPos) + 5) + "px")
+                .style("left", (parseFloat(xPos) - 35) + "px");
+        }).on("mouseout", function(d, i) {
+            d3.select(this).transition()
+                .duration('200')
+                .attr("r", 4);
+            div.transition()
+                .duration('200')
+                .style("opacity", 0);
+        });
 }
 
 function drawMap(scene) {
     const svg = scene.svg;
-    const projection = d3.geoNaturalEarth1();
+    const projection = d3.geoNaturalEarth1()
+        .scale(160)
+        .translate([+d3.select("svg").attr("width") / 2, +d3.select("svg").attr("height") / 2]);
     const pathGenerator = d3.geoPath().projection(projection);
+
     svg.append('path')
         .attr('class', 'sphere')
         .attr('d', pathGenerator({type: 'Sphere'}));
-    
-    d3.json("https://d3js.org/world-50m.v1.json", function(error, data) {
-        if (error) throw error;
-        
-        const countries = topojson.feature(data, data.objects.countries);
-        svg.selectAll('path.country').data(countries.features)
+
+    const colorScale = d3.scaleOrdinal(d3.schemeTableau10);
+
+    d3.json("https://d3js.org/world-50m.v1.json").then(data => {
+        const countries = topojson.feature(data, data.objects.countries).features;
+        svg.selectAll('path.country').data(countries)
             .enter().append('path')
             .attr('class', 'country')
-            .attr('d', pathGenerator);
+            .attr('d', pathGenerator)
+            .attr('fill', (d, i) => colorScale(i));
+    }).catch(error => {
+        console.error('Error loading the JSON data:', error);
     });
 }
+
 initialize();
