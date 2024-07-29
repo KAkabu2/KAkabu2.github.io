@@ -236,7 +236,7 @@ function drawLineGraph(scene) {
                     const annotations = [
                         {
                             note: {
-                                label: "Economic downturn leads to a rise in anxiety, but recovery is swift.",
+                                label: "Economic downturn largely does not alter decline of anxiety rates.",
                                 title: "2008: Economic Crisis" 
                             },
                             x: width / 2 + 188,
