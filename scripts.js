@@ -13,6 +13,26 @@ const focus = { country: "focus", data: [], svg: null};
 let currentSceneIndex = 0;
 let prevScene = 0;
 
+function loadCountryData(countryName) {
+    d3.csv("./Data/data.csv").then(data => {
+        const countryData = data.filter(d => d.Entity === countryName && d.Year >= 1970 && d.Year <= 2017)
+            .map(d => ({
+                Year: +d.Year,
+                "Anxiety disorders (%)": +d["Anxiety disorders (%)"]
+            }));
+
+        focus.country = countryName;
+        focus.data = countryData;
+
+        if (!focus.svg) {
+            focus.svg = d3.select("#line-graph-frame svg").append("g").attr("id", "focus-graph");
+        }
+        drawLineGraph(focus);
+    }).catch(error => {
+        console.error('Error loading the CSV data:', error);
+    });
+}
+
 async function loadData() {
     const data = await d3.csv("./Data/data.csv");
 
@@ -43,6 +63,7 @@ async function loadData() {
         currentSceneIndex = (currentSceneIndex - 1 + scenes.length) % scenes.length;
         renderScene(scenes[currentSceneIndex]);
     });
+    //Map button
     document.getElementById("back-btn").addEventListener("click", function() {
         currentSceneIndex = 2;
         renderScene(scenes[currentSceneIndex]);
@@ -178,7 +199,7 @@ function drawLineGraph(scene) {
         .attr("cy", d => y(d["Anxiety disorders (%)"]))
         .attr("r", 4)
         .attr("fill", function(d) {
-            if (d.Year == 2008 || (d.Year ==  1990 && scene == scenes[0]) || (d.Year == 2001 && scene == scenes[0])) {
+            if (d.Year == 2008 && ((scene === scenes[0]) || (scene === scenes[1])) || (d.Year ==  1990 && scene == scenes[0]) || (d.Year == 2001 && scene == scenes[0])) {
                 return "blue";
             } else {
                 return "red";
@@ -318,30 +339,27 @@ function drawMap(scene) {
                     .duration('100')
                     .style("stroke", "#000")
                     .style("stroke-width", 1.5);
-                    
-                div.transition()
-                    .duration('200')
+                    tooltip.transition()
+                    .duration(100)
                     .style("opacity", 1);
-    
-                div.html(`Country: ${d.properties.name}`)
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 20) + "px");
-            }).on("mousemove", function(event) {
-                div.style("left", (event.pageX + 10) + "px")
-                    .style("top", (event.pageY - 20) + "px");
+                tooltip.html(d.properties.name)
+                    .style("left", (event.pageX + 15) + "px")
+                    .style("top", (event.pageY - 28) + "px");
             })
-            .on("mouseout", function() {
+            .on("mouseout", function(event, d) {
                 d3.select(this).transition()
-                    .duration(200)
-                    .style("stroke", null)
-                    .style("stroke-width", null);
-                
-                div.transition()
-                    .duration(200)
+                    .duration('200')
+                    .style("stroke", "none");
+                tooltip.transition()
+                    .duration('200')
                     .style("opacity", 0);
+            })
+            .on("click", function(event, d) {
+                loadCountryData(d.properties.name);
+                document.getElementById("back-btn").style.display = "block";
             });
     }).catch(error => {
-        console.error('Error loading the JSON data:', error);
+        console.error('Error loading the geojson data:', error);
     });
 }
 

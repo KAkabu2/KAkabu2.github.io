@@ -19,3 +19,145 @@ div.tooltip {
     stroke-width: 0.5px;
     cursor: pointer;
 }
+
+/* General Body Styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f8f8;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    text-align: center; /* Center-aligns text and inline elements by default */
+}
+
+/* Header Styles */
+h1 {
+    text-align: center;
+    color: #000;
+    margin: 20px;
+}
+
+/* Scene Frame Styles */
+#scene-frame {
+    text-align: center;
+    margin: 20px;
+}
+
+svg {
+    border: 1px solid #ddd;
+    background-color: #fff;
+}
+
+/* Line Graph SVG Container */
+#line-graph-frame {
+    text-align: center;
+    margin: 20px;
+}
+
+#line-graph-frame svg {
+    border: 1px solid #ddd;
+    background-color: #fff;
+}
+
+/* Button Container */
+button-container {
+    display: flex;
+    justify-content: center; /* Centers buttons horizontally */
+    margin: 20px 0;
+}
+
+button {
+    background-color: #000;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #333;
+}
+
+/* Centered p1 Element */
+p1 {
+    display: block;
+    margin: 20px auto;
+    font-size: 16px;
+    color: #666;
+}
+
+/* Tooltip Styles */
+.tooltip {
+    position: absolute;
+    text-align: center;
+    padding: 5px;
+    background-color: #333;
+    color: #fff;
+    border-radius: 3px;
+    pointer-events: none;
+    font-size: 12px;
+}
+
+/* Annotation Styles */
+.annotation-group text {
+    font-size: 12px;
+    fill: #000;
+}
+
+.annotation-group .connector {
+    stroke: #000;
+}
+
+.annotation-group .note {
+    fill: #fff;
+    stroke: #000;
+}
+
+/* Map Styles */
+.country {
+    stroke: #666;
+    stroke-width: 0.5px;
+}
+
+.country:hover {
+    stroke: #000;
+    stroke-width: 1px;
+}
+
+/* Remove default list styles */
+ul, ol {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Remove default table styles */
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #scene-frame, #line-graph-frame {
+        width: 100%;
+    }
+
+    button {
+        width: 100%;
+        padding: 12px;
+        font-size: 18px;
+    }
+}
