@@ -64,10 +64,10 @@ async function loadData() {
         renderScene(scenes[currentSceneIndex]);
     });
     //Map button
-    document.getElementById("back-btn").addEventListener("click", function() {
-        currentSceneIndex = 2;
-        renderScene(scenes[currentSceneIndex]);
-    });
+    // document.getElementById("back-btn").addEventListener("click", function() {
+    //     currentSceneIndex = 2;
+    //     renderScene(scenes[currentSceneIndex]);
+    // });
 
     document.getElementById("Takeaway").addEventListener("click", function() {
         
@@ -185,6 +185,9 @@ function drawLineGraph(scene) {
         .attr("fill", "none")
         .attr("stroke", "black")
         .attr("stroke-width", 1.5)
+        .attr("d", line)
+        .transition()
+        .duration(750)
         .attr("d", line);
 
     var obtainAnx = d => d["Anxiety disorders (%)"];
@@ -356,7 +359,6 @@ function drawMap(scene) {
             })
             .on("click", function(event, d) {
                 loadCountryData(d.properties.name);
-                document.getElementById("back-btn").style.display = "block";
             });
     }).catch(error => {
         console.error('Error loading the geojson data:', error);
