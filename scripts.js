@@ -4,7 +4,7 @@ const tooltip = d3.select("body").append("div")
 
 const scenes = [
     { country: "United States", data: [], svg: null },
-    { country: "Somalia", data: [], svg: null },
+    { country: "Ghana", data: [], svg: null },
     { country: "Summary", data: [], svg: null }
 ];
 
@@ -70,7 +70,8 @@ async function loadData() {
     // });
 
     document.getElementById("Takeaway").addEventListener("click", function() {
-        
+        var p2visibility = document.getElementById("p2");
+        p2visibility.style.display = "block";
     });
 }
 
@@ -128,7 +129,7 @@ function transitionScene(scene) {
 }
 
 function drawLineGraph(scene) {
-    const margin = {top: 20, right: 30, bottom: 30, left: 40},
+    const margin = {top: 50, right: 30, bottom: 30, left: 40},
             width = +d3.select("svg").attr("width") - margin.left - margin.right,
             height = +d3.select("svg").attr("height") - margin.top - margin.bottom;
 
@@ -154,7 +155,7 @@ function drawLineGraph(scene) {
         .attr("text-anchor", "middle")  
         .style("font-size", "16px") 
         .style("text-decoration", "underline")  
-        .text(scene.data[0].Entity);
+        .text(scene.country);
 
     g.append("g")
         .attr("class", "axis axis--x")
@@ -238,8 +239,8 @@ function drawLineGraph(scene) {
                                 label: "Economic downturn leads to a rise in anxiety, but recovery is swift.",
                                 title: "2008: Economic Crisis" 
                             },
-                            x: width / 2 + 190,
-                            y: y(y.domain()[1]) + 170 , // Position near the y-axis at the top
+                            x: width / 2 + 188,
+                            y: y(y.domain()[1]) + 160 , // Position near the y-axis at the top
                             dy: -30,
                             dx: 30
                         }
@@ -278,7 +279,7 @@ function drawLineGraph(scene) {
                             title: "2008: End of IMF-World Bank Debt Relief Program" 
                         },
                         x: width / 2 + 190,
-                        y: y(y.domain()[1]) + 285 , // Position near the y-axis at the top
+                        y: y(y.domain()[1]) + 265 , // Position near the y-axis at the top
                         dy: -20,
                         dx: -20
                     }
@@ -300,7 +301,7 @@ function drawLineGraph(scene) {
                         title: "1990: Gulf War"
                     },
                     x: margin.left - 40,
-                    y: y(y.domain()[1]) + 395 , // Position near the y-axis at the top
+                    y: y(y.domain()[1]) + 370 , // Position near the y-axis at the top
                     dy: -30,
                     dx: 30
                 }];
